@@ -24,15 +24,15 @@ centreDetectors = ["SLWC3","SSWD4"]
 
 ## -- define the SLW and SSW bands in the central pixel 
 
-cent_spec_SLW   = np.full((200,3,1905),1.0) 
-cent_spec_SSW   = np.full((200,3,2082),1.0) 
+cent_spec_SLW   = np.full((200,3,1905),np.nan ) 
+cent_spec_SSW   = np.full((200,3,2082),np.nan ) 
 
 
 
 ## -- define the background (baseline) of the SLW and SSW bands of the central pixel 
 
-back_spec_SLW   = np.full((200,6,3,1905),1.0) 
-back_spec_SSW   = np.full((200,9,3,2082),1.0) 
+back_spec_SLW   = np.full((200,6,3,1905), np.nan ) 
+back_spec_SSW   = np.full((200,9,3,2082), np.nan ) 
 
 # -- detector name lists -- 
 offAxisDets = {'SSW':['SSWB2', 'SSWB3', 'SSWB4', 'SSWC2', 'SSWC5', 'SSWD2', 'SSWD6', 'SSWE5', 'SSWF3'], 'SLW':['SLWD3', 'SLWC4', 'SLWB3', 'SLWB2', 'SLWC2', 'SLWD2']}
@@ -64,22 +64,22 @@ for i in range(0, 200):   # loop 200 subscans
 
 
 # ---  define mean/median value arrays with a dimension of (3,1905)  
-SLW_mean        = np.full((3,1905),1.0) 
-SLW_median      = np.full((3,1905),1.0) 
-back_SLW_mean   = np.full((3,1905),1.0) 
+SLW_mean        = np.full((3,1905),np.nan ) 
+SLW_median      = np.full((3,1905),np.nan ) 
+back_SLW_mean   = np.full((3,1905),np.nan ) 
 
 
 
 # ---  for each channel (1905), calculate the mean/median  values 
 for i in range(0, 1905):
-      SLW_mean[0,i]      =   np.mean(cent_spec_SLW[:,0,i])    # -- mean   x-axis (freq) 
-      SLW_mean[1,i]      =   np.mean(cent_spec_SLW[:,1,i])    # -- mean   y-axis (flux) 
+      SLW_mean[0,i]      =   np.nanmean(cent_spec_SLW[:,0,i])    # -- mean   x-axis (freq) 
+      SLW_mean[1,i]      =   np.nanmean(cent_spec_SLW[:,1,i])    # -- mean   y-axis (flux) 
       SLW_mean[2,i]      =    np.std(cent_spec_SLW[:,1,i])    # -- mean   z-axis (error in flux)
       SLW_median[0,i]    = np.median(cent_spec_SLW[:,0,i])    # -- median x-axis (freq)                 
       SLW_median[1,i]    = np.median(cent_spec_SLW[:,1,i])    # -- median y-axis (flux) 
       SLW_median[2,i]    =    np.std(cent_spec_SLW[:,1,i])    # -- median z-axis (error in flux)
-      back_SLW_mean[0,i] = np.mean(back_spec_SLW[:,:,0,i])    # -- mean off-central pixel x-axis (freq)                  
-      back_SLW_mean[1,i] = np.mean(back_spec_SLW[:,:,1,i])    # -- mean off-central pixel y-axis (flux) 
+      back_SLW_mean[0,i] = np.nanmean(back_spec_SLW[:,:,0,i])    # -- mean off-central pixel x-axis (freq)                  
+      back_SLW_mean[1,i] = np.nanmean(back_spec_SLW[:,:,1,i])    # -- mean off-central pixel y-axis (flux) 
       back_SLW_mean[2,i] =  np.std(back_spec_SLW[:,:,1,i])    # -- mean off-central pixel z-axis (error in flux)
 
 
@@ -152,13 +152,13 @@ plt.savefig('SLW_mean_bg_sub.pdf')
 # -- working on individual spectrum for the baseline subtraction  
 # ----------------------------------------------------------------------------------------------------
 
-cent_spec_SLW   = np.full((200,3,1905),1.0) 
-cent_spec_SSW   = np.full((200,3,2082),1.0) 
+cent_spec_SLW   = np.full((200,3,1905),np.nan ) 
+cent_spec_SSW   = np.full((200,3,2082),np.nan ) 
 
 
 #  --- define baseline subtracted spectral arrays  
-bs_SLW      = np.full((200,3,1905),1.0) 
-bs_SLW_mean = np.full((3,1905),1.0) 
+bs_SLW      = np.full((200,3,1905),np.nan) 
+bs_SLW_mean = np.full((3,1905),np.nan ) 
 #----------------------------------------------------
 
 
@@ -173,16 +173,14 @@ for i in range(0, 200):
             cent_spec_SLW[i,1,]      = a[k].data.flux 
             cent_spec_SLW[i,2,]      = a[k].data.error 
             cent_sm_spec             = convolve(a[k].data.flux, gaussian, boundary='extend')  # make the baseline with Gaussian smooth  
-            bs_SLW[i,0,]             = a[k].data.wave                     # freq axis                                  
-            bs_SLW[i,1,]             = a[k].data.flux - cent_sm_spec # subtract baseline  
-            
 
-#   plt.clf()
-#   fig, ax_f = plt.subplots()
-#   ax_f.plot(cent_spec_SLW[i,0,], bs_SLW[i,1,])   # plot the baseline subtracted spectrum 
-#   ax_f.set_ylim(-5, 5)
-#   plt.savefig('subscan_plots/SLW_plot_bs_'+str(i)+'.pdf')
-#----------------output each scan plot 
+# There are a few individual spectra with a bit larger standard deviations (noises). Lets mask them out and only play with the less noisy spectra.   
+# This also can test if there is a mistake using the identical data in the plotting of SLW_bs_mean.pdf and SLW_mean_bg_sub.pdf 
+
+            if (np.std(cent_spec_SLW[i,1,]) < 2):
+                bs_SLW[i,0,]             = a[k].data.wave                     # freq axis                                  
+                bs_SLW[i,1,]             = a[k].data.flux - cent_sm_spec # subtract baseline  
+            
 
 
     plt.clf()
@@ -195,14 +193,14 @@ for i in range(0, 200):
     m=m+bs_SLW[i,1,][0]
 
 
-print(m/200.)
+#print(m/200.)
 
 ## bs_SLW is the baseline subtracted spectrum  
 
 ## --------  calculate the mean, median etc ... 
 for i in range(0, 1905):
-      bs_SLW_mean[0,i] = np.mean(bs_SLW[:,0,i])
-      bs_SLW_mean[1,i] = np.mean(bs_SLW[:,1,i])
+      bs_SLW_mean[0,i] = np.nanmean(bs_SLW[:,0,i])
+      bs_SLW_mean[1,i] = np.nanmean(bs_SLW[:,1,i])
       bs_SLW_mean[2,i] =  np.std(bs_SLW[:,1,i])
 
 
@@ -235,35 +233,3 @@ plt.hist(       bs_SLW[:,1,1000], bins=np.linspace(-2,2,20),color='red',alpha=0.
 plt.savefig('error_histogram.pdf')
 
 
-#     plt.clf()
-#     p0 = 2
-#     p1 = 800
-#     p2 = 0.37733
-#     x  = bs_SLW[:,0,1000]
-#     fig, ax_f = plt.subplots()
-#     sinconly   = p0*np.sinc((SLW_mean[0] -p1)/p2)
-#     spec_n_sinc= p0*np.sinc((SLW_mean[0] -p1)/p2)+SLW_mean[1]
-#     ax_f.plot(SLW_mean[0], sinconly)
-#     ax_f.plot(SLW_mean[0], spec_n_sinc)
-#     plt.savefig('sinc.pdf')
-#     
-#     spec_only  = cent_spec_SLW[100,1,] #SLW_mean[1] 
-#     sinc_only  = p0*np.sinc((SLW_mean[0] -p1)/p2)
-#     spec_n_sinc= p0*np.sinc((SLW_mean[0] -p1)/p2)+spec_only
-#     spec_sm           = convolve(spec_only  , gaussian, boundary='extend')
-#     spec_n_sinc_sm    = convolve(spec_n_sinc, gaussian, boundary='extend')
-#     spec_n_sinc_sm_bs = spec_n_sinc - spec_n_sinc_sm  
-#     
-#     
-#     plt.clf()
-#     fig, ax_f = plt.subplots()
-#     ax_f.plot(bs_SLW_mean[0], spec_n_sinc        , label='spec')
-#     ax_f.plot(bs_SLW_mean[0], spec_sm            , label='spec_sm')
-#     ax_f.plot(bs_SLW_mean[0], sinc_only          , label='sinc')
-#     ax_f.plot(bs_SLW_mean[0], spec_n_sinc_sm     , label='spec_n_sinc_sm')
-#     ax_f.plot(bs_SLW_mean[0], spec_n_sinc_sm_bs  , label='spec_n_sinc_sm_bs')
-#     ax_f.set_ylim(-3,3) 
-#     ax_f.set_xlim(750,850) 
-#     plt.legend( loc=2, borderaxespad=0.)
-#     plt.savefig('test_sm_bs.pdf')
-#     
