@@ -139,6 +139,7 @@ plt.savefig('cent_SLW_sm.pdf')
 # -- b is the spectrum with baseline subtracted using Gaussian smoothed off-central spectra, using the mean of all 200 subscan spectra   
 b_back = SLW_mean[1]-back_sm
 b_cent = SLW_mean[1]-cent_sm
+print(b_cent)
 plt.clf()
 fig, ax_f = plt.subplots()
 ax_f.plot(SLW_mean[0], b_back , label='mean-sub')
@@ -199,6 +200,7 @@ for i in range(0, 1905):
 
 
 # --- mean value of 200 SLW scans after subtraction individually 
+print(bs_SLW_mean[1])
 plt.clf()
 fig, ax_f = plt.subplots()
 ax_f.plot(bs_SLW_mean[0], bs_SLW_mean[1], label='scan_bs_mean')
